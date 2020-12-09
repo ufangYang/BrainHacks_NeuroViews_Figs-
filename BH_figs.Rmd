@@ -22,6 +22,8 @@ library(dplyr)    # yes, i could have not done this and just used 'subset' inste
 library(ggalt)    # devtools::install_github("hrbrmstr/ggalt")
 library(ggthemes) # theme_map and tableau colors
 library(viridis)
+
+
 ```
 
 ```{r}
@@ -34,27 +36,143 @@ df <- read.csv("Brainhack timeline - Cleaned_BHG Events By Year.csv")
 
 #https://datavizpyr.com/how-to-make-world-map-with-ggplot2-in-r/
 require(maps)
-world <- map_data("world")
-world <- world[world$region != "Antarctica",] # intercourse antarctica
-world <- world[world$region != "Greenland",] # intercourse antarctica
 
+world <-  map_data('world') %>% filter(is.na(subregion)| subregion != "Antarctica")
+  
+  map_data("world") %>% filter(region!="Antarctica")
+
+# check cities
+#wr_cities<- world.cities
+uk<- map_data("world") %>% filter(region=="UK")
 ```
 
+```{*r}
+df<-df_event %>% select(year,Country,region)
+bind_rows(df_event,wr_cities)
+```
 
 
 ```{r}
 # compute the frequency table for Country and city 
 
 df_event <-df %>% group_by(Country, City) %>% 
-  mutate(freq=n()*3)
+  mutate(freq=n()*3) %>% ungroup()
 
-   
 
-#df_event<- full_join(count_event,df, by="City")
+df_event<-df_event %>% rename(year= sorted.by.year,
+                              region=City,
+                              long=lon, country=Country)
+
+```
+
+```{r}
+# https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/
+theme_map <- function(...) {
+  theme_minimal() +
+  theme(
+    text = element_text( color = "#22211d"), #family = "Ubuntu Regular",
+    axis.line = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    # panel.grid.minor = element_line(color = "#ebebe5", size = 0.2),
+    panel.grid.major = element_line(color = "#ebebe5", size = 0.2),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "#f5f5f2", color = NA), 
+    panel.background = element_rect(fill = "#f5f5f2", color = NA), 
+    legend.background = element_rect(fill = "#f5f5f2", color = NA),
+    panel.border = element_blank(),
+    ...
+  )
+}
 ```
 
 
 
+```{r black map}
+
+# get the world map coordinates 
+ggplot() +
+  geom_polygon(data = world,aes(long, lat,  group = group), size = 0.1, alpha=0.9)+
+  #overlaying the data on world map use geom_point()
+  geom_point(
+    data = df_event,
+    aes(long, lat,fill= factor(year), size= freq),
+    colour = "white",shape=21,alpha = 0.7) +
+  scale_size(range = c(3, 12), name="Frequency")+
+  #scale_fill_viridis_c()
+  theme_map() +
+ # geom_text(data=df_event, aes(long, lat, label = as.character(region)), size=5) +
+  expand_limits(x = world$long, y = world$lat)
+  coord_map()+
+      # remove the x and y axis 
+  theme_void() +
+  theme(legend.position = "none")
+
+  
+  
+
+    labs(x = NULL, 
+         y = NULL, 
+         title = "Switzerland's regional demographics", 
+         subtitle = "Average age in Swiss municipalities, 2015", 
+         caption = "Geometries: ThemaKart, BFS; Data: BFS, 2016")
+
+ scale_fill_viridis(option = "magma", discrete = FALSE)
+
+
+
+```
+
+
+
+```{r}
+
+https://www.r-graph-gallery.com/330-bubble-map-with-ggplot2.html
+data <- world.cities %>% filter(country.etc=="UK")
+
+# Load the plotly package
+library(plotly)
+ 
+# Rorder data + Add a new column with tooltip text
+data <- df_event%>%
+  arrange(freq) %>%
+  mutate( name=factor(region, unique(region))) %>%
+  mutate( mytext=paste(
+    "City: ", name, "\n", 
+    "Brainhack: ", pop, sep="")
+  )
+ 
+# Make the map (static)
+p <- data %>%
+  ggplot() +
+    geom_polygon(data = UK, aes(x=long, y = lat, group = group), fill="grey", alpha=0.3) +
+    geom_point(aes(x=long, y=lat, size=pop, color=pop, text=mytext, alpha=pop) ) +
+    scale_size_continuous(range=c(1,15)) +
+    scale_color_viridis(option="inferno", trans="log" ) +
+    scale_alpha_continuous(trans="log") +
+    theme_void() +
+    ylim(50,59) +
+    coord_map() +
+    theme(legend.position = "none")
+ 
+p <- ggplotly(p, tooltip="text")
+p
+```
+
+
+
+
+
+
+
+
+
+
+
+# gray map 
 ```{r gray map}
 
 # get the world map coordinates 
@@ -74,28 +192,6 @@ ggplot() +
   # remove the x and y axis 
   theme_void() +
   theme(legend.position = "none")
-
-```
-
-
-```{r black map}
-
-# get the world map coordinates 
-ggplot() +
-  geom_map(
-    data = world, map = world,
-    aes(long, lat, map_id = region), size = 0.1)+
-  #overlaying the data on world map use geom_point()
-geom_point(
-    data = df_event,
-    aes(lon, lat, color = Country, size=freq,alpha = 0.7)) +
-  scale_size(range = c(3, 12), name="Frequency")+
-  scale_color_colorblind()+
-  #scale_colour_viridis_c()+
-  # remove the x and y axis 
-  theme_void() +
-  theme(legend.position = "none")+
-  ggtitle("  ColorBlind   ")
 
 ```
 
