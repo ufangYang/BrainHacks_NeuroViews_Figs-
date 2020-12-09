@@ -1,0 +1,130 @@
+---
+title: "BrainHacks_paper_Figs"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+rm(list=ls())
+path= dirname(rstudioapi::getActiveDocumentContext()$path)
+setwd(path)
+getwd()
+
+library(readr)
+library(readxl)
+library("writexl")
+library(tidyverse)
+
+
+library(ggplot2)  # FYI you need v2.0
+library(dplyr)    # yes, i could have not done this and just used 'subset' instead of 'filter'
+library(ggalt)    # devtools::install_github("hrbrmstr/ggalt")
+library(ggthemes) # theme_map and tableau colors
+library(viridis)
+```
+
+```{r}
+
+df <- read.csv("Brainhack timeline - Cleaned_BHG Events By Year.csv")
+#df_year2 <- read_csv("Brainhack timeline - Cleaned_BHG Events By Year_withEmptySpacePlaceholderForSunburst.csv")
+```
+
+```{r}
+
+#https://datavizpyr.com/how-to-make-world-map-with-ggplot2-in-r/
+require(maps)
+world <- map_data("world")
+world <- world[world$region != "Antarctica",] # intercourse antarctica
+world <- world[world$region != "Greenland",] # intercourse antarctica
+
+```
+
+
+
+```{r}
+# compute the frequency table for Country and city 
+
+df_event <-df %>% group_by(Country, City) %>% 
+  mutate(freq=n()*3)
+
+   
+
+#df_event<- full_join(count_event,df, by="City")
+```
+
+
+
+```{r gray map}
+
+# get the world map coordinates 
+ggplot() +
+  geom_map(
+    data = world, map = world,
+    aes(long, lat, map_id = region),
+    color = "white", fill = "gray", size = 0.1
+  )+
+  #overlaying the data on world map use geom_point()
+  geom_point(
+    data = df_event,
+    aes(lon, lat, color = Country, size=freq),alpha = 0.5) +
+  # chnage the size: https://www.r-graph-gallery.com/320-the-basis-of-bubble-plot.html
+  scale_size(range = c(3, 12), name="Frequency")+
+  scale_color_viridis(discrete=TRUE) +
+  # remove the x and y axis 
+  theme_void() +
+  theme(legend.position = "none")
+
+```
+
+
+```{r black map}
+
+# get the world map coordinates 
+ggplot() +
+  geom_map(
+    data = world, map = world,
+    aes(long, lat, map_id = region), size = 0.1)+
+  #overlaying the data on world map use geom_point()
+geom_point(
+    data = df_event,
+    aes(lon, lat, color = Country, size=freq,alpha = 0.7)) +
+  scale_size(range = c(3, 12), name="Frequency")+
+  scale_color_colorblind()+
+  #scale_colour_viridis_c()+
+  # remove the x and y axis 
+  theme_void() +
+  theme(legend.position = "none")+
+  ggtitle("  ColorBlind   ")
+
+```
+
+
+# plot map across years 
+
+
+```{r}
+# https://rud.is/b/2015/12/28/world-map-panel-plots-with-ggplot2-2-0-ggalt/
+
+library(ggplot2)  # FYI you need v2.0
+library(dplyr)    # yes, i could have not done this and just used 'subset' instead of 'filter'
+library(ggalt)    # devtools::install_github("hrbrmstr/ggalt")
+library(ggthemes) # theme_map and tableau colors
+
+
+ggplot() +
+  geom_map(
+    data = world, map = world,
+    aes(long, lat, map_id = region), color="white", fill="#7f7f7f", size=0.1, alpha=0.3)+
+  #overlaying the data on world map use geom_point()
+  geom_point(
+    data = df_event,
+    aes(lon, lat, color = Country),
+    size=6, alpha=0.7) +
+  facet_wrap(~sorted.by.year, labeller = label_both)+
+  #scale_fill_viridis(discrete=FALSE, guide=FALSE, option="A")
+  # remove the x and y axis 
+  theme_void() +
+  theme(legend.position = "none")
+```
+
