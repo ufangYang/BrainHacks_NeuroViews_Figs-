@@ -61,7 +61,8 @@ df_event <-df %>% group_by(Country, City) %>%
 
 df_event<-df_event %>% rename(year= sorted.by.year,
                               region=City,
-                              long=lon, country=Country)
+                              long=lon, country=Country,
+                              event=Theme.title.topic)
 
 ```
 
@@ -89,6 +90,45 @@ theme_map <- function(...) {
 }
 ```
 
+
+```{r black map legden }
+
+
+ggplot() +
+  geom_polygon(data = world,aes(long, lat,  group = group), size = 0.1, alpha=0.9)+
+  #overlaying the data on world map use geom_point()
+  geom_point(
+    data = df_event,
+    aes(long, lat,fill= factor(year), size= freq),
+    colour = "white",shape=21,alpha = 0.7) +
+  scale_size(range = c(3, 12), name="Number of events")+
+theme(
+  legend.title = element_text( size = 14),
+  legend.text = element_text( size = 10)
+  )+     
+  guides(color = guide_legend(override.aes = list(size = 3) ) )
+
+
+
+# # of eveent
+
+df %>% group_by(Country, City) %>% mutate(freq=n()) %>% ungroup()
+
+ggplot() +
+  geom_polygon(data = world,aes(long, lat,  group = group), size = 0.1, alpha=0.9)+
+  #overlaying the data on world map use geom_point()
+  geom_point(
+    data = df_event,
+    aes(long, lat,fill= factor(year), size= freq),
+    colour = "white",shape=21,alpha = 0.7) +
+  scale_size(range = c(3, 12), name="Number of events")+
+theme(
+  legend.title = element_text( size = 14),
+  legend.text = element_text( size = 10)
+  )+     
+  guides(color = guide_legend(override.aes = list(size = 3) ) )
+
+```
 
 
 ```{r black map}
@@ -130,7 +170,7 @@ ggplot() +
 
 ```{r}
 
-https://www.r-graph-gallery.com/330-bubble-map-with-ggplot2.html
+#https://www.r-graph-gallery.com/330-bubble-map-with-ggplot2.html
 data <- world.cities %>% filter(country.etc=="UK")
 
 # Load the plotly package
@@ -141,25 +181,29 @@ data <- df_event%>%
   arrange(freq) %>%
   mutate( name=factor(region, unique(region))) %>%
   mutate( mytext=paste(
-    "City: ", name, "\n", 
-    "Brainhack: ", pop, sep="")
+    "City: ", region, "\n", 
+    " ", event, sep="")
   )
  
 # Make the map (static)
-p <- data %>%
-  ggplot() +
-    geom_polygon(data = UK, aes(x=long, y = lat, group = group), fill="grey", alpha=0.3) +
-    geom_point(aes(x=long, y=lat, size=pop, color=pop, text=mytext, alpha=pop) ) +
-    scale_size_continuous(range=c(1,15)) +
-    scale_color_viridis(option="inferno", trans="log" ) +
-    scale_alpha_continuous(trans="log") +
-    theme_void() +
-    ylim(50,59) +
-    coord_map() +
-    theme(legend.position = "none")
+p <- ggplot() +
+  geom_polygon(data = world,aes(long, lat,  group = group), size = 0.1, alpha=0.9)+
+  geom_point(data = data,aes(long, lat,fill= factor(year), size= freq, text=mytext),
+             colour = "white",shape=21,alpha = 0.7) +
+  scale_size(range = c(3, 12), name="Frequency")+
+  scale_color_viridis(option="inferno")+
+  theme_void() +
+  #coord_map() +
+  theme(legend.position = "none")
  
 p <- ggplotly(p, tooltip="text")
+
 p
+
+# save the widget in a html file if needed.
+library(htmlwidgets)
+saveWidget(p, "bubblemapBrainhack.html")
+saveWidget(p, file=paste0( getwd(), "bubblemapBrainhack.html"))
 ```
 
 
