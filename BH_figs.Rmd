@@ -23,32 +23,52 @@ library(ggalt)    # devtools::install_github("hrbrmstr/ggalt")
 library(ggthemes) # theme_map and tableau colors
 library(viridis)
 
+library(ggmap)
+library(maps)
+library(mapdata)
+
 
 ```
 
 ```{r}
 
-df <- read.csv("Brainhack timeline - Cleaned_BHG Events By Year.csv")
+df <- read.csv("Data/Brainhack timeline - Cleaned_BHG Events By Year.csv")
+df_continent <- read.csv("Data/Brainhack timeline - Cleaned_plusContinent.csv")
 #df_year2 <- read_csv("Brainhack timeline - Cleaned_BHG Events By Year_withEmptySpacePlaceholderForSunburst.csv")
 ```
 
+
 ```{r}
-
 #https://datavizpyr.com/how-to-make-world-map-with-ggplot2-in-r/
-require(maps)
-
-world <-  map_data('world') %>% filter(is.na(subregion)| subregion != "Antarctica")
-  
-  map_data("world") %>% filter(region!="Antarctica")
+#world <-  map_data('world') %>% filter(is.na(subregion)| subregion != "Antarctica")
+world <-   map_data("world") %>% filter(region!="Antarctica")
 
 # check cities
 #wr_cities<- world.cities
-uk<- map_data("world") %>% filter(region=="UK")
+#uk<- map_data("world") %>% filter(region=="UK")
 ```
 
-```{*r}
-df<-df_event %>% select(year,Country,region)
-bind_rows(df_event,wr_cities)
+
+```{rrename the col}
+df_rename<-df%>% rename(year= sorted.by.year,
+                        region=City,
+                        date=YYYY.MM.DD,
+                        long=lon, country=Country,
+                        event=Theme.title.topic)
+
+head(df_rename)
+
+df_cont_rename<-df_continent%>% rename(year= sorted.by.year,
+                                 region=City,
+                                 date=YYYY.MM.DD,
+                                 long=lon, country=Country,
+                                 event=Theme.title.topic)
+
+
+
+
+head(df_cont_rename)
+
 ```
 
 
@@ -59,10 +79,7 @@ df_event <-df %>% group_by(Country, City) %>%
   mutate(freq=n()*3) %>% ungroup()
 
 
-df_event<-df_event %>% rename(year= sorted.by.year,
-                              region=City,
-                              long=lon, country=Country,
-                              event=Theme.title.topic)
+
 
 ```
 
@@ -94,19 +111,22 @@ theme_map <- function(...) {
 ```{r black map legden }
 
 
-ggplot() +
+p_map<-ggplot() +
   geom_polygon(data = world,aes(long, lat,  group = group), size = 0.1, alpha=0.9)+
+    coord_fixed(1.3)
+
   #overlaying the data on world map use geom_point()
-  geom_point(
+p_map + geom_point(
     data = df_event,
     aes(long, lat,fill= factor(year), size= freq),
     colour = "white",shape=21,alpha = 0.7) +
   scale_size(range = c(3, 12), name="Number of events")+
-theme(
-  legend.title = element_text( size = 14),
-  legend.text = element_text( size = 10)
+  theme(
+    legend.title = element_text( size = 14),
+    legend.text = element_text( size = 10)
   )+     
-  guides(color = guide_legend(override.aes = list(size = 3) ) )
+  guides(color = guide_legend(override.aes = list(size = 3) ) )+
+  coord_fixed(1.3)
 
 
 
