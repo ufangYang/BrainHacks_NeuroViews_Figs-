@@ -147,7 +147,7 @@ world+
 
 # save the fig
 #library(svglite)
-ggsave("Output//buublemap.png", width = 5, height = 3, dpi = 300)
+#("Output//buublemap.png", width = 5, height = 3, dpi = 300)
 
 
 ```
