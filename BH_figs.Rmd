@@ -27,64 +27,62 @@ library(ggmap)
 library(maps)
 library(mapdata)
 
+library(cowplot)   # get_legend() & plot_grid() functions
+library(patchwork) # blank plot: plot_spacer()
+
+
 
 ```
 
 ```{r}
-
-df <- read.csv("Data/Brainhack timeline - Cleaned_BHG Events By Year.csv")
+df <- read.csv("Data/brainhack-timeline_cleaned_YF.csv")
 df_continent <- read.csv("Data/Brainhack timeline - Cleaned_plusContinent.csv")
 #df_year2 <- read_csv("Brainhack timeline - Cleaned_BHG Events By Year_withEmptySpacePlaceholderForSunburst.csv")
 ```
 
 
-```{r}
-#https://datavizpyr.com/how-to-make-world-map-with-ggplot2-in-r/
-#world <-  map_data('world') %>% filter(is.na(subregion)| subregion != "Antarctica")
-
-wr<-   map_data("world") %>% filter(region!="Antarctica")
-
-wr<-wr%>% mutate(year =NA,
-                 event= NA)
-# check cities
-#wr_cities<- world.cities
-#uk<- map_data("world") %>% filter(region=="UK")
-```
-
-
-```{rrename the col}
+```{r rename the col}
 df_rename<-df%>% rename(year= sorted.by.year,
                         region=City,
                         date=YYYY.MM.DD,
-                        long=lon, country=Country,
+                        long=lon, 
+                        country=Country,
                         event=Theme.title.topic,
                         lat=lat)
 
 head(df_rename)
 
-df_cont_rename<-df_continent%>% rename(year= sorted.by.year,
-                                 region=City,
-                                 date=YYYY.MM.DD,
-                                 long=lon, country=Country,
-                                 event=Theme.title.topic)
-
-head(df_cont_rename)
+# df_cont_rename<-df_continent%>% rename(year= sorted.by.year,
+#                                  region=City,
+#                                  date=YYYY.MM.DD,
+#                                  long=lon, country=Country,
+#                                  event=Theme.title.topic)
+# 
+# head(df_cont_rename)
 
 ```
 
-
-
+#w est and south are negative, northa nd east positive in those map representations 
+# every city gets only 1 bubble, the bubble size is the total number of brainhacks the city has had across all years, the bubble color is the year in which the city had their first brainhack. 
 ```{r compute the frequency table for Country and city }
+# display cumulative events, with the color being the year of the first event.
 
-df_event <-df_rename%>% group_by(country, region) %>% 
+df_event <-df_rename%>% group_by(region,country) %>% 
   mutate(freq=n()) %>% ungroup() %>% arrange(freq)
 
 head(df_event)
 
+df_event2 <-df_event %>% select(year,country,region,long,lat,Continent,freq)
+head(df_event2)
+df_event3 <- unique(df_event2)
 
 
+# sanity check for how many countired are involved
+Hmisc::describe(df_event3)
 ```
 
+
+# Plot the maps
 
 ```{r theme}
 # https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/
@@ -110,12 +108,14 @@ theme_map <- function(...) {
 }
 ```
 
-
+### Legend position: 
+Note that, the argument legend.position can be also a numeric vector c(x,y). In this case it is possible to position the legend inside the plotting area. x and y are the coordinates of the legend box. Their values should be between 0 and 1. c(0,0) corresponds to the “bottom left” and c(1,1) corresponds to the “top right” position.
 ```{r}
 # https://stackoverflow.com/questions/50201048/remove-antarctica-from-gglpot2-map
 library(sf)
 # viridis: http://search.r-project.org/library/ggplot2/html/scale_viridis.html
 
+# plot the world map 
 world <- map_data("world") %>% filter(region!="Antarctica")
 
 world.sf <- sf::st_as_sf(world, coords = c("long", "lat"), crs = 4326) %>% 
@@ -130,30 +130,33 @@ world <- ggplot() +
    xlab("Longitude") + ylab("Latitude")
   #theme(panel.background = element_rect(fill = 'white'))
 
+# plot Brainhack
+
+df_event_des<-df_event3 %>% arrange(desc(freq))
+head(df_event_des)
+
 world+
   geom_point(
-    data = df_event,
-    aes(long, lat,fill= factor(year), size= freq),
-    colour = "white",shape=21,alpha = 0.7, group=FALSE) + 
-  scale_fill_viridis_d(option="B",direction = 1,alpha = 0.7)
-# begin= 0, end =0.8, , aesthetics = "fill"
-#scale_size(range = c(3, 9), name="Number of events")+
-# theme(
-#   legend.title = element_text( size = 14),
-#   legend.text = element_text( size = 10)) +
-# guides(color = guide_legend(override.aes = list(size = 3)))+
-#coord_fixed(1.3) +
-theme_map()+
-  #theme_void() +
-  #coord_map() +
+    data = df_event_des,
+    aes(long, lat,fill= factor(year), size= factor(freq)),
+    colour = "white",shape=21, stroke = 0.2,alpha= 0.75) + 
+  labs(fill='Year')+
+  labs(size = "Number of the events")+
+  guides(fill= guide_legend(override.aes = list(size=8)))+
+  guides(size= guide_legend(override.aes = list(size=8)))+
+# theme_bw() + 
+theme_void()+  # coordination info 
   theme(legend.position = "none")
+
+
 
 # save the fig
 #library(svglite)
-#("Output//buublemap.png", width = 5, height = 3, dpi = 300)
-
+ggsave("Output//buublemap_9.png", width = 5, height =3, dpi = 300)
+#ggsave("Output//buublemap_6.png", dpi = 300)
 
 ```
+
 
 color bar for years , and also in the legend for dot size corresponding to the number of events for that city.
 
@@ -161,7 +164,7 @@ color bar for years , and also in the legend for dot size corresponding to the n
 ```{r point size scale}
 world+
   geom_point(
-    data = df_event,
+    data = df_event_des,
     aes(long, lat,colour= factor(year)),alpha = 0.7)+  
   guides(colour = guide_legend(override.aes = list(size=19)))+
   theme(legend.text=element_text(size=15))
@@ -178,197 +181,15 @@ world+
 ```
 
 
+```{r caculation}
 
-# No needed
+df_event %>% filter(freq==7)
 
-- *long* is longitude. Things to the west of the prime meridian are negative.  
-- *lat* is latitude.
-- *order.*This just shows in which order ggplot should “connect the dots”
-- *region and subregion* tell what region or subregion a set of points surrounds.
-- *group.* This is very important! ggplot2’s functions can take a group argument which controls (amongst other things) whether adjacent points should be connected by lines. If they are in the same group, then they get connected, but if they are in different groups then they don’t.
-  -Essentially, having to points in different groups means that ggplot “lifts the pen” when going between them.
+df_event %>% filter(freq==3)
 
-
-
-
-
-```{r black map legden }
-
-
-p_map<-ggplot() +
-  geom_polygon(data = world,aes(long, lat,  group = group), size = 0.1, alpha=0.9)+
-    coord_fixed(1.3)
-
-  #overlaying the data on world map use geom_point()
-p_map + geom_point(
-    data = df_event,
-    aes(long, lat,fill= factor(year), size= freq),
-    colour = "white",shape=21,alpha = 0.7) +
-  scale_size(range = c(3, 12), name="Number of events")+
-  theme(
-    legend.title = element_text( size = 14),
-    legend.text = element_text( size = 10)
-  )+     
-  guides(color = guide_legend(override.aes = list(size = 3) ) )+
-  coord_fixed(1.3)
-
-
-
-# # of eveent
-
-df %>% group_by(Country, City) %>% mutate(freq=n()) %>% ungroup()
-
-ggplot() +
-  geom_polygon(data = world,aes(long, lat,  group = group), size = 0.1, alpha=0.9)+
-  #overlaying the data on world map use geom_point()
-  geom_point(
-    data = df_event,
-    aes(long, lat,fill= factor(year), size= freq),
-    colour = "white",shape=21,alpha = 0.7) +
-  scale_size(range = c(3, 12), name="Number of events")+
-theme(
-  legend.title = element_text( size = 14),
-  legend.text = element_text( size = 10)
-  )+     
-  guides(color = guide_legend(override.aes = list(size = 3) ) )
+df_event %>%  filter(region=="Nijmegen")
+df_event %>%  filter(region=="Leiden")
 
 ```
 
-
-```{r black map}
-
-# get the world map coordinates 
-ggplot() +
-  geom_polygon(data = world,aes(long, lat,  group = group), size = 0.1, alpha=0.9)+
-  #overlaying the data on world map use geom_point()
-  geom_point(
-    data = df_event,
-    aes(long, lat,fill= factor(year), size= freq),
-    colour = "white",shape=21,alpha = 0.7) +
-  scale_size(range = c(3, 12), name="Frequency")+
-  #scale_fill_viridis_c()
-  theme_map() +
- # geom_text(data=df_event, aes(long, lat, label = as.character(region)), size=5) +
-  expand_limits(x = world$long, y = world$lat)
-  coord_map()+
-      # remove the x and y axis 
-  theme_void() +
-  theme(legend.position = "none")
-
-  
-  
-
-    labs(x = NULL, 
-         y = NULL, 
-         title = "Switzerland's regional demographics", 
-         subtitle = "Average age in Swiss municipalities, 2015", 
-         caption = "Geometries: ThemaKart, BFS; Data: BFS, 2016")
-
- scale_fill_viridis(option = "magma", discrete = FALSE)
-
-
-
-```
-
-
-
-```{r interactive map }
-
-#https://www.r-graph-gallery.com/330-bubble-map-with-ggplot2.html
-data <- world.cities %>% filter(country.etc=="UK")
-
-# Load the plotly package
-library(plotly)
- 
-# Rorder data + Add a new column with tooltip text
-data <- df_event%>%
-  arrange(freq) %>%
-  mutate( name=factor(region, unique(region))) %>%
-  mutate( mytext=paste(
-    "City: ", region, "\n", 
-    " ", event, sep="")
-  )
- 
-# Make the map (static)
-p <- ggplot() +
-  geom_polygon(data = world,aes(long, lat,  group = group), size = 0.1, alpha=0.9)+
-  geom_point(data = data,aes(long, lat,fill= factor(year), size= freq, text=mytext),
-             colour = "white",shape=21,alpha = 0.7) +
-  scale_size(range = c(3, 12), name="Frequency")+
-  scale_color_viridis(option="inferno")+
-  theme_void() +
-  #coord_map() +
-  theme(legend.position = "none")
- 
-p <- ggplotly(p, tooltip="text")
-
-p
-
-# save the widget in a html file if needed.
-library(htmlwidgets)
-saveWidget(p, "bubblemapBrainhack.html")
-saveWidget(p, file=paste0( getwd(), "bubblemapBrainhack.html"))
-```
-
-
-
-
-
-
-
-
-
-
-
-# gray map 
-```{r gray map}
-
-# get the world map coordinates 
-ggplot() +
-  geom_map(
-    data = world, map = world,
-    aes(long, lat, map_id = region),
-    color = "white", fill = "gray", size = 0.1
-  )+
-  #overlaying the data on world map use geom_point()
-  geom_point(
-    data = df_event,
-    aes(lon, lat, color = Country, size=freq),alpha = 0.5) +
-  # chnage the size: https://www.r-graph-gallery.com/320-the-basis-of-bubble-plot.html
-  scale_size(range = c(3, 12), name="Frequency")+
-  scale_color_viridis(discrete=TRUE) +
-  # remove the x and y axis 
-  theme_void() +
-  theme(legend.position = "none")
-
-```
-
-
-# plot map across years 
-
-
-```{r}
-# https://rud.is/b/2015/12/28/world-map-panel-plots-with-ggplot2-2-0-ggalt/
-
-library(ggplot2)  # FYI you need v2.0
-library(dplyr)    # yes, i could have not done this and just used 'subset' instead of 'filter'
-library(ggalt)    # devtools::install_github("hrbrmstr/ggalt")
-library(ggthemes) # theme_map and tableau colors
-
-
-ggplot() +
-  geom_map(
-    data = world, map = world,
-    aes(long, lat, map_id = region), color="white", fill="#7f7f7f", size=0.1, alpha=0.3)+
-  #overlaying the data on world map use geom_point()
-  geom_point(
-    data = df_event,
-    aes(lon, lat, color = Country),
-    size=6, alpha=0.7) +
-  facet_wrap(~sorted.by.year, labeller = label_both)+
-  #scale_fill_viridis(discrete=FALSE, guide=FALSE, option="A")
-  # remove the x and y axis 
-  theme_void() +
-  theme(legend.position = "none")
-```
 
