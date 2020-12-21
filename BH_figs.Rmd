@@ -1,47 +1,37 @@
 ---
-title: "BrainHacks_paper_Figs"
+title: "BubbleMp figure for Brainhack papers in Neuroview by Yu-Fang Yang"
 output: html_document
 editor_options: 
   chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
-rm(list=ls())
-path= dirname(rstudioapi::getActiveDocumentContext()$path)
-setwd(path)
-getwd()
-
 library(readr)
 library(readxl)
 library("writexl")
 library(tidyverse)
-
-
 library(ggplot2)  # FYI you need v2.0
 library(dplyr)    # yes, i could have not done this and just used 'subset' instead of 'filter'
 library(ggalt)    # devtools::install_github("hrbrmstr/ggalt")
 library(ggthemes) # theme_map and tableau colors
 library(viridis)
-
 library(ggmap)
 library(maps)
 library(mapdata)
-
 library(cowplot)   # get_legend() & plot_grid() functions
 library(patchwork) # blank plot: plot_spacer()
-
-
+library(sf)
 
 ```
 
 ```{r}
 df <- read.csv("Data/brainhack-timeline_cleaned_YF.csv")
-df_continent <- read.csv("Data/Brainhack timeline - Cleaned_plusContinent.csv")
-#df_year2 <- read_csv("Brainhack timeline - Cleaned_BHG Events By Year_withEmptySpacePlaceholderForSunburst.csv")
+#df_continent <- read.csv("Data/Brainhack timeline - Cleaned_plusContinent.csv")
+
 ```
 
 
-```{r rename the col}
+```{r rename the cols}
 df_rename<-df%>% rename(year= sorted.by.year,
                         region=City,
                         date=YYYY.MM.DD,
@@ -64,6 +54,8 @@ head(df_rename)
 
 #w est and south are negative, northa nd east positive in those map representations 
 # every city gets only 1 bubble, the bubble size is the total number of brainhacks the city has had across all years, the bubble color is the year in which the city had their first brainhack. 
+
+
 ```{r compute the frequency table for Country and city }
 # display cumulative events, with the color being the year of the first event.
 
@@ -76,9 +68,6 @@ df_event2 <-df_event %>% select(year,country,region,long,lat,Continent,freq)
 head(df_event2)
 df_event3 <- unique(df_event2)
 
-
-# sanity check for how many countired are involved
-Hmisc::describe(df_event3)
 ```
 
 
@@ -108,13 +97,7 @@ theme_map <- function(...) {
 }
 ```
 
-### Legend position: 
-Note that, the argument legend.position can be also a numeric vector c(x,y). In this case it is possible to position the legend inside the plotting area. x and y are the coordinates of the legend box. Their values should be between 0 and 1. c(0,0) corresponds to the “bottom left” and c(1,1) corresponds to the “top right” position.
-```{r}
-# https://stackoverflow.com/questions/50201048/remove-antarctica-from-gglpot2-map
-library(sf)
-# viridis: http://search.r-project.org/library/ggplot2/html/scale_viridis.html
-
+```{r create the bubble map}
 # plot the world map 
 world <- map_data("world") %>% filter(region!="Antarctica")
 
@@ -130,7 +113,7 @@ world <- ggplot() +
    xlab("Longitude") + ylab("Latitude")
   #theme(panel.background = element_rect(fill = 'white'))
 
-# plot Brainhack
+# plot Brainhacks
 
 df_event_des<-df_event3 %>% arrange(desc(freq))
 head(df_event_des)
@@ -139,7 +122,7 @@ world+
   geom_point(
     data = df_event_des,
     aes(long, lat,fill= factor(year), size= factor(freq)),
-    colour = "white",shape=21, stroke = 0.2,alpha= 0.75) + 
+    colour = "white",shape=21, stroke = 0.2,alpha= 0.85) + 
   labs(fill='Year')+
   labs(size = "Number of the events")+
   guides(fill= guide_legend(override.aes = list(size=8)))+
@@ -151,45 +134,8 @@ theme_void()+  # coordination info
 
 
 # save the fig
-#library(svglite)
-ggsave("Output//buublemap_9.png", width = 5, height =3, dpi = 300)
-#ggsave("Output//buublemap_6.png", dpi = 300)
+ggsave("Output//buublemap_10.png", width = 5, height =3, dpi = 300)
+
 
 ```
-
-
-color bar for years , and also in the legend for dot size corresponding to the number of events for that city.
-
-
-```{r point size scale}
-world+
-  geom_point(
-    data = df_event_des,
-    aes(long, lat,colour= factor(year)),alpha = 0.7)+  
-  guides(colour = guide_legend(override.aes = list(size=19)))+
-  theme(legend.text=element_text(size=15))
-```
-
-```{r}
-world+
-  geom_point(
-    data = df_event,
-    aes(long, lat, size= freq),shape=21) +
-  guides(colour = guide_legend(override.aes = list(size=25)))+
-  theme(legend.text=element_text(size=19))
-
-```
-
-
-```{r caculation}
-
-df_event %>% filter(freq==7)
-
-df_event %>% filter(freq==3)
-
-df_event %>%  filter(region=="Nijmegen")
-df_event %>%  filter(region=="Leiden")
-
-```
-
 
