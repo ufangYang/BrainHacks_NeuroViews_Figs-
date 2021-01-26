@@ -22,13 +22,11 @@ library(mapdata)
 library(cowplot)   # get_legend() & plot_grid() functions
 library(patchwork) # blank plot: plot_spacer()
 library(sf)
-
 ```
 
 ```{r}
 df <- read.csv("Data/brainhack-timeline_cleaned_YF.csv")
 #df_continent <- read.csv("Data/Brainhack timeline - Cleaned_plusContinent.csv")
-
 ```
 
 
@@ -138,7 +136,6 @@ world+
         legend.direction="horizontal")
   theme(legend.position = "top")
 #theme(legend.position = "none")
-
 
 # save the fig
 #ggsave("Output//buublemap_10_legend.png", width = 5, height =3, dpi = 300)
