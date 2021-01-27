@@ -111,34 +111,41 @@ world <- ggplot() +
    xlab("Longitude") + ylab("Latitude")
   #theme(panel.background = element_rect(fill = 'white'))
 
+# set colour palette
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 # plot Brainhacks
 
 df_event_des<-df_event3 %>% arrange(desc(freq))
 head(df_event_des)
 
+#library(patchwork)
 world+
   geom_point(
     data = df_event_des,
     aes(long, lat,fill= factor(year), size= factor(freq)),
-    colour = "white",shape=21, stroke = 0.2,alpha= 0.85) + 
+    colour = "white",shape=21, stroke = 0.4,alpha= 0.85) + 
   labs(fill='Year')+
   labs(size = "Number of the events")+
-  #scale_colour_colorblind()
+  scale_fill_manual(values = c("#000000","#999999", "#E69F00","#56B4E9","#009E73","#F0E442", "#0072B2", "#D55E00", "#CC79A7"))+
+  #scale_colour_colorblind() # only allow 8 variables
   #scale_fill_colorblind()+
-  scale_fill_viridis(discrete=TRUE,option = "D")+
+  #scale_fill_viridis(discrete=TRUE,option = "D")+
   #size for the legend
   guides(fill= guide_legend(override.aes = list(size=8)))+
   guides(size= guide_legend(override.aes = list(size=8)))+
-  # theme_bw() +   
   guides(size=FALSE)+ # turn off the legend for size 
   theme(legend.position="top",
         legend.spacing.x = unit(0, 'cm'),
-        legend.direction="horizontal")
-  theme(legend.position = "top")
-#theme(legend.position = "none")
+        legend.direction="horizontal")+
+  theme(legend.position = "top")+
+  theme_map()
+  #enable this line to remove all the legends
+  theme(legend.position = "none")
 
 # save the fig
-#ggsave("Output//buublemap_10_legend.png", width = 5, height =3, dpi = 300)
+ggsave("Output/buublemap_12_legend.png", width = 5, height =2.5, dpi = 300) #)
+# insert ggplot code
+dev.off()
 
 
 ```
