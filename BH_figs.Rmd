@@ -118,8 +118,8 @@ world <- ggplot() +
 
 # set colour palette
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-# plot Brainhacks
 
+# plot Brainhacks bubblemap
 df_event_des<-df_event3 %>% arrange(desc(freq))
 head(df_event_des)
 
@@ -132,8 +132,7 @@ world+
   labs(fill='Year')+
   labs(size = "Number of the events")+
   scale_fill_manual(values = c("#000000","#999999", "#E69F00","#56B4E9","#009E73","#F0E442", "#0072B2", "#D55E00", "#CC79A7"))+
-  #scale_colour_colorblind() # only allow 8 variables
-  #scale_fill_colorblind()+
+  #scale_fill_colorblind() # only allow 8 variables
   #scale_fill_viridis(discrete=TRUE,option = "D")+
   #size for the legend
   guides(fill= guide_legend(override.aes = list(size=8)))+
@@ -142,14 +141,14 @@ world+
   theme(legend.position="top",
         legend.spacing.x = unit(0, 'cm'),
         legend.direction="horizontal")+
-    theme_map()+
+  theme_map()+
   theme(legend.position = "top")+
   #enable this line to remove all the legends
   theme(legend.position = "none")
 
 
 # save the fig
-#ggsave("Output/buublemap_12_legend.png", width = 5, height =2.5, dpi = 300) #)
+ggsave("Output/buublemap_13.png", width = 5, height =2.5, dpi = 300) #)
 # insert ggplot code
 #dev.off()
 
