@@ -1,5 +1,5 @@
 ---
-title: "BubbleMp figure for Brainhack papers in Neuroview by Yu-Fang Yang"
+title: "BubbleMap figure for Brainhack papers in Neuronview by Yu-Fang Yang"
 output: html_document
 editor_options: 
   chunk_output_type: console
