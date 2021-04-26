@@ -51,15 +51,18 @@ head(df_rename)
 
 ```
 
-#w est and south are negative, northa nd east positive in those map representations 
-# every city gets only 1 bubble, the bubble size is the total number of brainhacks the city has had across all years, the bubble color is the year in which the city had their first brainhack. 
-
+# In those map representations, west and south are negative, north and east are positive. 
+# Every city has only one bubble, the bubble scale is the average amount of brainhacks the city has seen over all years, and the bubble colour is the year the city has their first brainhack.
 
 ```{r compute the frequency table for Country and city }
 # display cumulative events, with the color being the year of the first event.
 
 df_event <-df_rename%>% group_by(region,country) %>% 
-  mutate(freq=n()) %>% ungroup() %>% arrange(freq)
+  mutate(freq=n()) %>% ungroup() %>% arrange(freq) %>% 
+  filter(year==2013 & country=="USA")
+
+  
+df_event1<-df_event[(df_event$year!=2013)& (df_event$country !="USA"),] 
 
 head(df_event)
 
@@ -148,7 +151,7 @@ world+
 
 
 # save the fig
-ggsave("Output/buublemap_13.png", width = 5, height =2.5, dpi = 300) #)
+ggsave("Output/buublemap_14.png", width = 5, height =2.5, dpi = 300) #)
 # insert ggplot code
 #dev.off()
 
