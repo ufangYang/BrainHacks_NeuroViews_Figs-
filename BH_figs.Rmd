@@ -57,12 +57,11 @@ head(df_rename)
 ```{r compute the frequency table for Country and city }
 # display cumulative events, with the color being the year of the first event.
 
-df_event <-df_rename%>% group_by(region,country) %>% 
-  mutate(freq=n()) %>% ungroup() %>% arrange(freq) %>% 
-  filter(year==2013 & country=="USA")
+df_event <-df_rename%>% group_by(region,country) %>%   
+  mutate(freq=n()) %>% ungroup() %>% arrange(freq) 
 
-  
-df_event1<-df_event[(df_event$year!=2013)& (df_event$country !="USA"),] 
+# Remove: 16/06/2013 | USA | Seattle | OHBM Hackathon | -122.332071 | 47.60621|
+df_event1<- df_event %>%filter(year!="2013" | country !="USA") 
 
 head(df_event)
 
